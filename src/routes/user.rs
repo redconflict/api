@@ -1,49 +1,41 @@
 use std::sync::Arc;
 
-use axum::{
-  extract::State, http::StatusCode, routing::get, Json, Router
-};
+use crate::data::Crud;
+use axum::response::ErrorResponse;
+use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use tokio::sync::Mutex;
-use uuid::Uuid;
 
+use crate::models::UserFromRequest;
 use crate::{
-  models::{User, UserForCreate},
+  models::User,
   state::AppState,
 };
 
 pub fn router() -> Router<Arc<Mutex<AppState>>> {
   // State (context) shared between all endpoint/middlewares.
-  Router::new()
-    .route("/", get(get_users).post(create_user))
+  Router::new().route("/", get(get_users).post(create_user))
 }
 
-#[derive(serde::Serialize)]
-struct Users {
-  users: Vec<User>
-}
+async fn get_users(State(state): State<Arc<Mutex<AppState>>>) -> axum::response::Result<Json<Vec<User>>> {
+  let st = state.lock().await;
+  if let Ok(users) = User::all(st.store()).await {
+    return Ok(Json(users))
+  }
 
-async fn get_users(State(state): State<Arc<Mutex<AppState>>>) -> Json<Users> {
-  let clone = state.lock().await.clone();
-  Json(Users { users: clone.users })
+  Err(ErrorResponse::from(StatusCode::INTERNAL_SERVER_ERROR))
 }
 
 async fn create_user(
   State(state): State<Arc<Mutex<AppState>>>,
-  Json(payload): Json<UserForCreate>,
-) -> (StatusCode, Json<User>) {
+  Json(payload): Json<UserFromRequest>,
+) -> axum::response::Result<Json<User>> {
+  if let Ok(u) = payload.for_create() {
+    // Creating new user.
+    let st = state.lock().await;
+    if let Ok(user) = User::create(st.store(), u).await {
+      return Ok(Json(user))
+    }
+  }
 
-  // Creating new user.
-  let user = User {
-    id: Uuid::new_v4(),
-    created_at: chrono::Local::now().timestamp() as u64,
-    update_at: None,
-    username: payload.username,
-    password: payload.password,
-  };
-
-  // Saving to state.
-  state.lock().await.add_user(user.clone());
-
-  // Return user.
-  (StatusCode::CREATED, Json(user))
+  Err(ErrorResponse::from(StatusCode::INTERNAL_SERVER_ERROR))
 }

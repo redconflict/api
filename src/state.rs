@@ -1,16 +1,16 @@
-use crate::models::User;
+use sqlx::{Pool, Postgres};
 
 #[derive(Clone)]
 pub struct AppState {
-  pub users: Vec<User>,
+  pub pool: Pool<Postgres>
 }
 
 impl AppState {
-  pub fn new() -> Self {
-    AppState { users: Vec::new() }
+  pub fn new(pool: Pool<Postgres>) -> Self {
+    AppState { pool }
   }
 
-  pub fn add_user(&mut self, user: User) {
-    self.users.push(user)
+  pub fn store(&self) -> &Pool<Postgres> {
+    &self.pool
   }
 }

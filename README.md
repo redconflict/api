@@ -12,6 +12,16 @@
 
 ## How to run ?
 
+Add `.cargo/config.toml` :
+
+```toml
+[env]
+APP_ADDR = "0.0.0.0:8000"
+DB_DSN = "postgres://root:root@localhost:5432/redconflict"
+```
+
+Then run :
+
 `$ cargo run`
 
 ## Where binary are located ?

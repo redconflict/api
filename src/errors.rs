@@ -9,4 +9,8 @@ pub enum Error {
   #[from(tokio::io::Error)]
   #[display("io error: {_0}")]
   Io(tokio::io::Error),
+
+  #[from(sqlx::Error)]
+  #[display("db error: {_0}")]
+  Db(sqlx::Error)
 }
