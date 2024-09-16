@@ -1,7 +1,5 @@
-#![allow(unused_imports)]
+mod crud;
 
-// Include `user` module.
-mod user;
+pub mod user;
 
-// Re-export everything from `user` module.
-pub use user::*;
+pub use crud::*;

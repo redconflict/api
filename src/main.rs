@@ -1,9 +1,9 @@
 mod models;
-mod routes;
+mod web;
 mod state;
 mod config;
 mod errors;
-mod data;
+mod security;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -25,7 +25,7 @@ async fn main() -> Result<(), errors::Error> {
   let listener = tokio::net::TcpListener::bind(cfg.addr).await?;
   
   let router = axum::Router::new()
-    .nest("/users", routes::user::router())
+    .nest("/users", web::routes::user::router())
     .with_state(state);
 
   // Listen to HTTP request.

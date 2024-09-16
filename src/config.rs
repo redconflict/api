@@ -17,9 +17,9 @@ impl Config {
 
   /// Create [`Config`] from process environment.
   pub fn from_env() -> Result<Self, Error> {
-    let addr = std::env::var("APP_ADDR")?;
-    let db_dsn = std::env::var("DB_DSN")?;
-
-    Ok(Self { addr, db_dsn })
+    Ok(Self {
+      addr: std::env::var("APP_ADDR")?, 
+      db_dsn: std::env::var("DB_DSN")?
+    })
   }
 }

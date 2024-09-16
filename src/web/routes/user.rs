@@ -1,25 +1,26 @@
 use std::sync::Arc;
 
-use crate::data::Crud;
+use crate::models::Crud;
 use axum::response::ErrorResponse;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
+use axum_valid::Valid;
 use tokio::sync::Mutex;
 
-use crate::models::UserFromRequest;
-use crate::{
-  models::User,
-  state::AppState,
-};
+use crate::models::user::{User, Users};
+use crate::state::AppState;
+use crate::web::payloads::UserFromRequest;
 
 pub fn router() -> Router<Arc<Mutex<AppState>>> {
   // State (context) shared between all endpoint/middlewares.
   Router::new().route("/", get(get_users).post(create_user))
 }
 
-async fn get_users(State(state): State<Arc<Mutex<AppState>>>) -> axum::response::Result<Json<Vec<User>>> {
+async fn get_users(
+  State(state): State<Arc<Mutex<AppState>>>,
+) -> axum::response::Result<Json<Vec<User>>> {
   let st = state.lock().await;
-  if let Ok(users) = User::all(st.store()).await {
-    return Ok(Json(users))
+  if let Ok(users) = Users::with(&st.pool).all().await {
+    return Ok(Json(users));
   }
 
   Err(ErrorResponse::from(StatusCode::INTERNAL_SERVER_ERROR))
@@ -27,12 +28,11 @@ async fn get_users(State(state): State<Arc<Mutex<AppState>>>) -> axum::response:
 
 async fn create_user(
   State(state): State<Arc<Mutex<AppState>>>,
-  Json(payload): Json<UserFromRequest>,
+  Valid(Json(payload)): Valid<Json<UserFromRequest>>,
 ) -> axum::response::Result<Json<User>> {
-  if let Ok(u) = payload.for_create() {
-    // Creating new user.
-    let st = state.lock().await;
-    if let Ok(user) = User::create(st.store(), u).await {
+  let st = state.lock().await;
+  if let Ok(ufc) = payload.try_into() {
+    if let Ok(user) = Users::with(&st.pool).create(ufc).await {
       return Ok(Json(user))
     }
   }
