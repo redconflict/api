@@ -9,8 +9,4 @@ impl AppState {
   pub fn new(pool: Pool<Postgres>) -> Self {
     AppState { pool }
   }
-
-  pub fn store(&self) -> &Pool<Postgres> {
-    &self.pool
-  }
 }

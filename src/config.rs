@@ -1,6 +1,7 @@
 
 #[derive(derive_more::From, derive_more::Display, derive_more::Debug)]
 pub enum Error {
+  #[allow(unused)]
   WrongValue,
 
   #[from(std::env::VarError)]
